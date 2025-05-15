@@ -6,6 +6,9 @@ import {
   createWebHistory,
 } from 'vue-router';
 import routes from './routes';
+import { useUserStore } from 'src/stores/user-store';
+import { useGeneralStore } from 'src/stores/general-store';
+import { useQuasar } from 'quasar';
 
 /*
  * If not building with SSR mode, you can
@@ -16,10 +19,12 @@ import routes from './routes';
  * with the Router instance.
  */
 
-export default defineRouter(function (/* { store, ssrContext } */) {
+export default defineRouter(function () {
   const createHistory = process.env.SERVER
     ? createMemoryHistory
-    : (process.env.VUE_ROUTER_MODE === 'history' ? createWebHistory : createWebHashHistory);
+    : process.env.VUE_ROUTER_MODE === 'history'
+      ? createWebHistory
+      : createWebHashHistory;
 
   const Router = createRouter({
     scrollBehavior: () => ({ left: 0, top: 0 }),
@@ -29,6 +34,33 @@ export default defineRouter(function (/* { store, ssrContext } */) {
     // quasar.conf.js -> build -> vueRouterMode
     // quasar.conf.js -> build -> publicPath
     history: createHistory(process.env.VUE_ROUTER_BASE),
+  });
+
+  Router.beforeEach(async (to, from, next) => {
+    const $q = useQuasar();
+    const generalStore = useGeneralStore();
+    const userStore = useUserStore();
+
+    if (generalStore.isInitialLoading) {
+      $q.loading.show();
+      await userStore.checkAuth();
+      $q.loading.hide();
+      generalStore.setIsInitialLoading(false);
+    }
+
+    const isToPathAuth = to.path === '/auth';
+
+    if (userStore.isAuth) {
+      if (isToPathAuth) {
+        next({ path: '/' });
+      } else {
+        next();
+      }
+    } else if (!isToPathAuth) {
+      next({ path: '/auth' });
+    } else {
+      next();
+    }
   });
 
   return Router;
