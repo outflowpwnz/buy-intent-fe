@@ -11,8 +11,8 @@
           aria-label="Menu"
           @click="toggleLeftDrawer"
         />
-
         <q-toolbar-title>Buy Intent Fe</q-toolbar-title>
+        <theme-switcher />
       </q-toolbar>
     </q-header>
 
@@ -34,6 +34,7 @@
 import { ref } from 'vue';
 import EssentialLink, { type EssentialLinkProps } from 'components/essential-link.vue';
 import { useUserStore } from 'stores/user-store';
+import ThemeSwitcher from 'src/modules/theme-switcher.vue';
 
 const userStore = useUserStore();
 const linksList: EssentialLinkProps[] = [
